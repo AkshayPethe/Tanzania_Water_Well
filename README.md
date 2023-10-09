@@ -1,6 +1,6 @@
 # Tanzania Well Water Functionality Multiclass Classification
 
-![Tanzania Well](well_water.jpg)
+![Tanzania Water Well](https://github.com/AkshayPethe/Tanzania_Water_Well/blob/main/images/sm22-1715-clean-water-for-a-child%20(1).jpg)
 
 ## Overview
 
