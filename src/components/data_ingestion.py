@@ -1,12 +1,13 @@
 import os
 import sys
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
 from src.logger import logging
 from src.exception import CustomException
 
-# Initialize the Data Ingestion Configuration
+#Initialize the Data Ingestion Configuration
 @dataclass
 class DataIngestionconfig:
     train_data_path: str = os.path.join('artifacts', 'train.csv')
@@ -26,6 +27,7 @@ class DataIngestion:
 
             # Concatenate X and Y for one Master DataFrame
             df = pd.concat([X, y], axis=1)
+            print(df.shape)
 
             # Dropping 'id' Column
             df.drop('id', axis=1, inplace=True)
@@ -33,11 +35,22 @@ class DataIngestion:
             # Dropping Duplicates
             df.drop_duplicates(keep='first', inplace=True)
             data = df.copy()
+            df.drop(['num_private','amount_tsh'],axis =1,inplace = True)
+            df['longitude'] = df['longitude'].replace(0, np.nan)
+
+            col_drop = ['extraction_type','extraction_type_group','payment',
+            'water_quality','quantity','source','source_type',
+            'waterpoint_type','region_code','ward',
+            'subvillage','lga','management','wpt_name','scheme_name','date_recorded','construction_year',
+            'recorded_by']
+            df = df.drop(col_drop,axis = 1)
+            print(df.columns)
+            print(df.shape)
 
             os.makedirs(os.path.dirname(self.ingestion_config.raw_data_path), exist_ok=True)
             df.to_csv(self.ingestion_config.raw_data_path, index=False)
 
-            train_set, test_set = train_test_split(df, test_size=0.3, stratify=y, random_state=101)
+            train_set, test_set = train_test_split(df, test_size=0.3,random_state=101)
 
             train_set.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
             test_set.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
