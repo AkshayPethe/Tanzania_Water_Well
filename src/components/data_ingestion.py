@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
 from src.logger import logging
 from src.exception import CustomException
+from src.components.data_transform import DataTransformation
 
 #Initialize the Data Ingestion Configuration
 @dataclass
@@ -27,7 +28,6 @@ class DataIngestion:
 
             # Concatenate X and Y for one Master DataFrame
             df = pd.concat([X, y], axis=1)
-            print(df.shape)
 
             # Dropping 'id' Column
             df.drop('id', axis=1, inplace=True)
@@ -44,8 +44,9 @@ class DataIngestion:
             'subvillage','lga','management','wpt_name','scheme_name','date_recorded','construction_year',
             'recorded_by']
             df = df.drop(col_drop,axis = 1)
-            print(df.columns)
-            print(df.shape)
+
+            logging.info("Main DataFrame is Created for Splitting")
+          
 
             os.makedirs(os.path.dirname(self.ingestion_config.raw_data_path), exist_ok=True)
             df.to_csv(self.ingestion_config.raw_data_path, index=False)
@@ -63,7 +64,13 @@ class DataIngestion:
 
 if __name__ == '__main__':
     obj = DataIngestion()
-    obj.initiate_data_ingestion()
+    obj.initiate_data_ingestion()  # Initiating data ingestion
+    
+    # Now initiate data transformation
+    data_transformation = DataTransformation()
+    train_path = obj.ingestion_config.train_data_path
+    test_path = obj.ingestion_config.test_data_path
+    data_transformation.initiate_data_transformation(train_path, test_path)
             
         
         

@@ -6,7 +6,8 @@ from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
 from src.logger import logging
 from src.exception import CustomException
-import pickle
+from src.utils import save_object
+
 from sklearn.feature_selection import mutual_info_classif, SelectKBest
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
@@ -28,14 +29,14 @@ class DataTransformation:
     def __init__(self):
         self.data_transformation_config = DataTransformationConfig()
 
-    def get_data_transformation_object(self, X_train, X_test, y_train):
+    def get_data_transformation_object(self, X_train, X_test, y_train, y_test):
         try:
             logging.info("Data Transformation Initiated")
             
             # Transformation function
             def transform(X, col):
                 value_counts = X[col].value_counts(normalize=True, ascending=False)
-                cumulative_sum = value_counts.cumsum()
+                cumulative_sum = value_counts.cumsum()  # Corrected method name to cumsum
                 selected_values = cumulative_sum[cumulative_sum <= 0.75].index
                 encoded = X[col].apply(lambda x: 'Major' if x in selected_values else 'Minor')
                 return encoded
@@ -64,13 +65,13 @@ class DataTransformation:
             ], remainder='passthrough')
 
             label_binarizer = LabelBinarizer()
-            label_binarizer = LabelBinarizer()
             y_train_encoded = label_binarizer.fit_transform(y_train)
             y_test_encoded = label_binarizer.transform(y_test)
             y_train_label = np.argmax(y_train_encoded, axis=1)
             y_test_label = np.argmax(y_test_encoded, axis=1)
 
-            return preprocessor,
+            return preprocessor  # Return the preprocessor object
+
             logging.info("PipeLine is Completed")
 
     
@@ -79,24 +80,45 @@ class DataTransformation:
             raise CustomException(e, sys)
         
 
-    def initiate_data_transformation(self,train_path,test_path):
-            
-            try:
-                 train_df = pd.read_csv(train_path)
-                 test_df = pd.read_csv(test_path)
+    def initiate_data_transformation(self, train_path, test_path):
+        try:
+            train_df = pd.read_csv(train_path)
+            test_df = pd.read_csv(test_path)
+
+            logging.info("Read Train and Test Completed ")
+            logging.info(f'DataFrame Train Info :\n{train_df.head().to_string()}')
+            logging.info(f'DataFrame Train Info :\n{test_df.head().to_string()}')
+
+            logging.info("Data Preprocessing Obj Started")
+
+            target_column = 'status_group'
+
+            input_feature_train_df = train_df.drop(target_column, axis=1)
+            input_target_train_df = train_df[target_column]
+
+            input_feature_test_df = test_df.drop(target_column, axis=1)
+            input_target_test_df = test_df[target_column]
+
+            logging.info("Applying Preprocessing on Train and Test")
+
+            preprocessing_obj = self.get_data_transformation_object(input_feature_train_df, input_feature_test_df, \
+                                                                    input_target_train_df, input_target_test_df)
                  
-            except Exception as e:
-                 logging.info("Exception occured in Data Transformation Initiation")
-                 raise CustomException(e,sys)
+
+            input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
+            input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
+                 
+            save_object(file_path=self.data_transformation_config.preprocessor_obj_file_path,
+                        obj=preprocessing_obj)
             
+            logging.info("Preprocessing Pkl is created")
+
+        except Exception as e:
+               logging.error("Error in Data Transformation Preprocessing")
+               raise CustomException(e, sys)
 
 
-# Initialize and use DataTransformation class
-data_transformer = DataTransformation()
-data_transformer.get_data_transformation_object(X_train, X_test, y_train)
-
-# The rest of your Python script
-# ...
+        
 
 
 
